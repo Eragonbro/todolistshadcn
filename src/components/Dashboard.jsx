@@ -1,5 +1,8 @@
 import React from 'react'
 import TasksData from './TasksData'
+import TaskTable from './TaskTable';
+import AddTaskFeature from './AddTaskFeature';
+import KPIs from './KPIs';
 
 import {
     Card,
@@ -10,7 +13,7 @@ import {
     CardTitle,
   } from "@/components/ui/card"
   
-  import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+  
   import { Checkbox } from "@/components/ui/checkbox";
   import { Button } from "@/components/ui/button"
   import {
@@ -23,10 +26,50 @@ import {
   } from "@/components/ui/dialog"
 import { Label } from "@radix-ui/react-label";
 import { Input } from "@/components/ui/input"
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { 
+    useReactTable, 
+    getCoreRowModel, 
+    getSortedRowModel, 
+    flexRender 
+  } from "@tanstack/react-table";
+
 
 
 export default function Dashboard() {
 
+    let [tasks, setTasks] = React.useState(TasksData);
+    const columns = [
+        {   accessorKey: 'done',
+            header: 'Done',
+            cell: ({row}) =>  <Checkbox
+                                    checked={row.getValue()}
+                                    onCheckedChange={() => console.log('onCheckedChange')}
+                              />
+        },
+        {
+            accessorKey: 'name',
+            header: 'Task'},
+        {    
+            accessorKey: 'time',
+            header: 'Duration'},
+        {
+            accessorKey: 'dueDate',
+            header: 'Due Date',
+            cell: ({row}) => {
+                const date = new Date(row.getValue('dueDate'));
+                return date;
+            }
+        }
+    ];
+    
+    const table = useReactTable ({
+        TasksData,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+    })
+    
+    
     const toggleChecked = (index) => {
         setTasks((prevTasks) =>
           prevTasks.map((task, i) =>
@@ -35,7 +78,14 @@ export default function Dashboard() {
         );
       };
     
-    let [tasks, setTasks] = React.useState(TasksData);
+
+    let [sumHours, setSumHours] = React.useState(0)
+
+    React.useEffect(()=>{
+        setSumHours(tasks.reduce((sum, item) => sum + Number(item.time), 0))
+    }, [tasks]);
+
+    const donePercentage = (100 * (tasks.filter(item => item.done).length)/tasks.length).toFixed(1);
 
     let taskRows = tasks.map((item,index)=>{
             return    <TableRow key={index} className='text-left py-6 '>
@@ -60,114 +110,48 @@ export default function Dashboard() {
     const [open, setOpen] = React.useState(false);
 
     
-        // Handle form submit
-        const handleNewTask = (event) => {
-            event.preventDefault(); // Prevent page reload
+    // Handle form submit
+    const handleNewTask = (event) => {
+        event.preventDefault(); // Prevent page reload
 
-            // Get the form data
-            const formData = new FormData(event.currentTarget);
-            
-            const newTask = {
-              name: formData.get("taskName"),
-              time: formData.get("taskTime"),
-              dueDate: formData.get("taskDate"),
-              done: false, // Default unchecked
-            };
-          
-            console.log("New Task:", newTask);
-            
-            // Add the new task to the list
-            setTasks((prevTasks) => [...prevTasks, newTask]);
-          
-            // Clear the form
-            event.currentTarget.reset();
-            setOpen(false);
+        // Get the form data
+        const formData = new FormData(event.currentTarget);
+        
+        const newTask = {
+            name: formData.get("taskName"),
+            time: formData.get("taskTime"),
+            dueDate: formData.get("taskDate"),
+            done: false, // Default unchecked
         };
+        
+        console.log("New Task:", newTask);
+        
+        // Add the new task to the list
+        setTasks((prevTasks) => [...prevTasks, newTask]);
+        
+        // Clear the form
+        event.currentTarget.reset();
+        setOpen(false);
+    };
     
     
     
     return (
-        <div className="">
-            <div className="grid grid-cols-1 sm:grid-cols-3  gap-4">
+        <div className="w-full md:w-3xl">
+            <KPIs tasks={tasks} sumHours={sumHours} donePercentage={donePercentage}/> 
+            
+            <div className="mt-4 p-0">
+                <Card className='text-left'>
 
-            <Card className='flex flex-col justify-center p-0'>
-                <CardHeader className='p-4 space-y-1'>
-                    <CardTitle className="text-3xl font-bold">{tasks.length} tasks</CardTitle>
-                    <CardDescription className="text-sm text-gray-500">today</CardDescription>
-                </CardHeader>
-            </Card>
-
-            <Card className='flex flex-col items-center justify-center p-0'>
-                <CardContent className='p-4 space-y-1'>
-                    <h2 className="text-3xl font-bold whitespace-nowrap">4,5 hours</h2>
-                    <p className="text-sm text-gray-500 whitespace-nowrap">remaining to finish tasks</p>
-                </CardContent>
-            </Card>
-
-            <Card className='flex flex-col items-center justify-center p-0 '>
-                <CardContent className='p-4 space-y-2'>
-                    <h2 className="text-3xl font-bold">12,5%</h2>
-                    <p className="text-sm text-gray-500">Completion rate</p>
-                </CardContent>
-            </Card>
-
-            </div>
-
-
-            <div className="mt-4 w-[850px] ">
-                <Card>
-                    <CardHeader className='w-full  px-8 flex flex-row items-center justify-between pt-3 pb-2'>
-                        <CardTitle className='w-fit'>Here is your list of tasks for the day!</CardTitle>
-                        <Dialog open={open} onOpenChange={setOpen}>
-                            <DialogTrigger asChild><Button className='p-4 w-fit inlin'>Add task</Button></DialogTrigger>
-                            
-                            <DialogContent aria-describedby={undefined}>
-                                <DialogTitle className='text-center'>New task</DialogTitle>
-                            
-                                <form className="space-y-6" onSubmit={handleNewTask}>
-                                    
-                                    <div className="">
-                                        <Label htmlFor="taskName">Task name</Label>
-                                        <Input name='taskName' id='taskName' className="mt-2" placeholder="e.g. Close €44k MRR"></Input>
-                                    </div>
-                                    
-                                    <div>
-                                        <Label htmlFor="taskTime">Time it takes</Label>
-                                        <Input name='taskTime' id='taskTime' className="mt-2" placeholder="2 hours (everyday for 1 year)"></Input>
-                                    </div>
-                                    
-                                    <div>
-                                        <Label htmlFor="taskDate">Due Date</Label>
-                                        <Input name='taskDate' id='taskDate' className="mt-2" placeholder="01/09/2025"></Input>
-                                    </div>
-                                    
-                                    <div className="text-center">
-                                        <Button className='px-7' type='submit' variant='secondary'>Add</Button>
-                                    </div>
-
-                                </form>
-                            </DialogContent>
-                        
-                        </Dialog>
+                    <CardHeader className='w-full flex flex-row items-center justify-between pt-3 pb-2 px-2'>
+                        <CardTitle className='w-fit px-0'>Here is your list of tasks for the day!</CardTitle>
+                        <AddTaskFeature open={open} setOpen={setOpen} onSubmit={handleNewTask} />
                     </CardHeader>
-                    <CardContent>
-                        <Table className=''>
-                        
-                        <TableHeader className='text-left'>
-                            <TableRow>
-                            <TableHead>Done</TableHead>
-                            <TableHead>Task</TableHead>
-                            <TableHead className='text-right pr-6'>Time</TableHead>
-                            <TableHead className='text-right'>Due Date</TableHead>
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-                            {taskRows}                       
-                        </TableBody>
-                        
-                        </Table>
+                    
+                    <CardContent className=' w-full p-0'>
+                        <TaskTable taskRows = {taskRows} />
                     </CardContent>
+                
                 </Card>
             </div>
 

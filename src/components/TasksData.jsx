@@ -50,13 +50,13 @@ const TasksData = [
     {
       done: false,
       name: "Lunch with a mentor to discuss startup growth",
-      time: 1.5,
+      time: 2,
       dueDate: "2023-11-14"
     },
     {
       done: false,
       name: "Evening gym session: Strength training",
-      time: 1.5,
+      time: 1,
       dueDate: "2023-11-12"
     }
   ];

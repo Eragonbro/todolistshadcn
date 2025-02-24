@@ -19,12 +19,21 @@ import {
 
 
 
-function App() {
-  const [count, setCount] = useState(0)
 
+function App() {
+  
   return (
     <>
       <Dashboard />
+      <div className='w-full text-left mt-8 space-y-2'>
+        <h1 className='font-extrabold text-2xl'>Features roadmap</h1>
+        <ul>
+          <li> - KPIs automatically ✅</li>
+          <li> - sorting by date</li>
+          <li> - once a task done, it goes to the bottom</li>
+          <li> - colors (yellow) ✅</li>
+        </ul>
+      </div>
     </>
   )
 }
